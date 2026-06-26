@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -75,15 +75,9 @@
     </div>
   </footer>
 
-  <!-- Carga Supabase desde CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    // Inicialización global de Supabase
-    const supabase = supabase.createClient(
-        'https://ffgvezfpfxfwutrtrxme.supabase.co', 
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZ3ZlemZwZnhmd3V0cnRyeG1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTA2OTksImV4cCI6MjA5Nzg4NjY5OX0.4t6RVDVvsIAbHfbNpILeQbWvgJPNjy47ZrIFH5iD3Lk'
-    );
+  <script type="module">
+    import { supabase } from '../src/supabaseClient.js';
+    import { procesarPedido } from '../src/utils/api_whatsapp.js';
 
     let carrito = [];
     let menuCompleto = [];
@@ -102,7 +96,7 @@
         renderizar(filtrados);
     };
 
-    function renderizar(data) {
+function renderizar(data) {
         const container = document.getElementById('menu-container');
         container.innerHTML = data.map(p => `
             <div class="col-sm-6 col-lg-4">
@@ -134,20 +128,37 @@
 
     window.finalizarPedido = async () => {
         if (carrito.length === 0) return;
-        // Asume que la función procesarPedido está definida en algún otro script o debes integrarla aquí
-        alert("Pedido procesado (Integrar lógica de WhatsApp aquí)");
+        await procesarPedido(carrito, carrito.reduce((s, i) => s + parseFloat(i.precio), 0));
     };
 
-    async function cargarMenu() {
+async function cargarMenu() {
+        // 1. Intentar cargar desde localStorage primero
+        const cachedMenu = localStorage.getItem('menu_doraditos');
+        
+        if (cachedMenu) {
+            menuCompleto = JSON.parse(cachedMenu);
+            renderizar(menuCompleto);
+            generarBotones(menuCompleto); // Función separada para los botones
+        }
+
+        // 2. Traer de Supabase siempre para mantener actualizado
         const { data } = await supabase.from('menu_doraditos').select('*');
+        
         if (data) {
             menuCompleto = data;
+            // 3. Guardar en localStorage para la próxima vez
+            localStorage.setItem('menu_doraditos', JSON.stringify(data));
             renderizar(menuCompleto);
-            const cats = ['Todos', ...new Set(data.map(p => p.categoria).filter(c => c))];
-            document.getElementById('filters-container').innerHTML = cats.map(c => 
-                `<button class="btn btn-outline-light m-1" onclick="filtrarMenu('${c}')">${c}</button>`
-            ).join('');
+            generarBotones(menuCompleto);
         }
+    }
+
+    // Nueva función auxiliar para no repetir código de los botones
+    function generarBotones(data) {
+        const cats = ['Todos', ...new Set(data.map(p => p.categoria).filter(c => c))];
+        document.getElementById('filters-container').innerHTML = cats.map(c => 
+            `<button class="btn btn-outline-light m-1" onclick="filtrarMenu('${c}')">${c}</button>`
+        ).join('');
     }
 
     cargarMenu();
