@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/menu",
+      "destination": "/frontend/menu.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

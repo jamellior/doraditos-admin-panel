@@ -5,7 +5,6 @@ import './scss/style.scss'
 import './scss/examples.scss'
 
 import Login from './views/pages/login/Login'
-import Menu from './views/menu/menu' // <--- Importamos tu nuevo componente
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
 const App = () => {
@@ -16,9 +15,6 @@ const App = () => {
       <Suspense fallback={<div className="pt-3 text-center"><CSpinner color="primary" variant="grow" /></div>}>
         <Routes>
           <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-          {/* Ruta pública para tus clientes */}
-          <Route path="/menu" element={<Menu />} /> 
-          
           <Route 
             path="*" 
             element={isAuthenticated ? <DefaultLayout /> : <Navigate to="/login" replace />} 
