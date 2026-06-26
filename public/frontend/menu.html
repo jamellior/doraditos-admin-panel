@@ -75,6 +75,14 @@
     </div>
   </footer>
 
+  <script>
+  // Pega aquí los valores literales que tienes en tu .env local
+  const SUPABASE_URL = 'https://ffgvezfpfxfwutrtrxme.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZ3ZlemZwZnhmd3V0cnRyeG1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTA2OTksImV4cCI6MjA5Nzg4NjY5OX0.4t6RVDVvsIAbHfbNpILeQbWvgJPNjy47ZrIFH5iD3Lk';
+  
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
+
   <script type="module">
     import { supabase } from '../src/supabaseClient.js';
     import { procesarPedido } from '../src/utils/api_whatsapp.js';
