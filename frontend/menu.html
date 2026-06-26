@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Pollos Los Doraditos</title>
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+  <link href="css/style.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+  
+  <style>
+    body { background-color: #121212; color: #ffffff; }
+    .header-section { width: 100%; padding: 40px 20px; text-align: center; background: #000; }
+    .header-section img { max-width: 300px; width: 100%; height: auto; margin: 0 auto; }
+    #carrito-flotante { position: fixed; bottom: 80px; right: 20px; z-index: 9999; background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); max-width: 300px; display: none; color: white; }
+    .box { background: #1e1e1e !important; border: 1px solid #333 !important; }
+    h5, h6, p { color: #ffffff !important; }
+    .footer_section { background-color: #000; color: #fff; padding: 40px 0; border-top: 2px solid #333; }
+  </style>
+</head>
+
+<body>
+
+  <header class="header-section">
+      <img src="images/logohigh.png" alt="Logo Los Doraditos">
+  </header>
+
+  <button id="btn-toggle-carrito" class="btn btn-primary" onclick="toggleCarrito()" style="position:fixed; bottom:20px; right:20px; z-index:10000; border-radius:50%; padding: 15px;">
+    <i class="fa fa-shopping-cart"></i>
+  </button>
+
+  <div id="carrito-flotante">
+    <h5>Tu Pedido</h5>
+    <ul id="lista-carrito" style="list-style: none; padding: 0;"><li>Vacío.</li></ul>
+    <hr style="border-top: 1px solid #444;">
+    <strong id="total-carrito">Total: ₡0</strong>
+    <button onclick="window.vaciarCarrito()" class="btn btn-danger btn-sm w-100 mt-2">Vaciar</button>
+    <button onclick="window.finalizarPedido()" class="btn btn-success btn-sm w-100 mt-2">Finalizar Pedido</button>
+  </div>
+
+  <section class="food_section layout_padding">
+    <div class="container">
+      <div class="heading_container heading_center">
+        <h2>Nuestro Menú</h2>
+      </div>
+      
+      <div class="filters_menu text-center mb-4" id="filters-container">
+        <button class="btn btn-outline-light active" onclick="filtrarMenu('Todos')">Todos</button>
+      </div>
+
+      <div class="row grid" id="menu-container">
+        <p class="text-center w-100">Cargando delicias...</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer_section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 footer-col">
+          <h4>Contacto</h4>
+          <p><i class="fa fa-map-marker"></i> San Miguel de Santo Domingo, Heredia.</p>
+          <p><i class="fa fa-phone"></i> +506 2235-9416</p>
+          <p><i class="fa fa-whatsapp"></i> WhatsApp: +506 8441-2970</p>
+        </div>
+        <div class="col-md-4 footer-col">
+          <h4>Redes</h4>
+          <p><i class="fa fa-facebook"></i> pollolosdoraditos</p>
+          <p><i class="fa fa-instagram"></i> @pollolosdoraditos</p>
+        </div>
+        <div class="col-md-4 footer-col text-center">
+          <img src="images/mymenuqrlogo.png" alt="Logo" style="max-width: 150px;">
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { supabase } from '../src/supabaseClient.js';
+    import { procesarPedido } from '../src/utils/api_whatsapp.js';
+
+    let carrito = [];
+    let menuCompleto = [];
+
+    window.toggleCarrito = () => {
+        const c = document.getElementById('carrito-flotante');
+        c.style.display = (c.style.display === 'block') ? 'none' : 'block';
+    };
+
+    window.vaciarCarrito = () => {
+        if(confirm("¿Borrar todo?")) { carrito = []; window.actualizarVistaCarrito(); }
+    };
+
+    window.filtrarMenu = (cat) => {
+        const filtrados = (cat === 'Todos') ? menuCompleto : menuCompleto.filter(p => p.categoria === cat);
+        renderizar(filtrados);
+    };
+
+function renderizar(data) {
+        const container = document.getElementById('menu-container');
+        container.innerHTML = data.map(p => `
+            <div class="col-sm-6 col-lg-4">
+                <div class="box">
+                    ${p.imagen_url ? `
+                        <div class="img-box" style="background:#000; padding:10px;">
+                            <img src="${p.imagen_url}" style="width:100%;" alt="${p.nombre}">
+                        </div>
+                    ` : ''}
+                    <div class="detail-box">
+                        <h5>${p.nombre}</h5>
+                        <p style="color: #ccc; font-size: 0.9rem;">${p.descripcion || 'Sin descripción'}</p>
+                        <h6>₡${p.precio}</h6>
+                        <button onclick='window.agregar(${JSON.stringify(p).replace(/'/g, "\\'")})' class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Añadir
+                        </button>
+                    </div>
+                </div>
+            </div>`).join('');
+    }
+
+    window.actualizarVistaCarrito = () => {
+        const lista = document.getElementById('lista-carrito');
+        lista.innerHTML = carrito.length === 0 ? '<li>Vacío.</li>' : carrito.map(i => `<li>• ${i.nombre}</li>`).join('');
+        document.getElementById('total-carrito').innerText = 'Total: ₡' + carrito.reduce((s, i) => s + parseFloat(i.precio), 0);
+    };
+
+    window.agregar = (plato) => { carrito.push(plato); window.actualizarVistaCarrito(); alert(plato.nombre + " añadido."); };
+
+    window.finalizarPedido = async () => {
+        if (carrito.length === 0) return;
+        await procesarPedido(carrito, carrito.reduce((s, i) => s + parseFloat(i.precio), 0));
+    };
+
+async function cargarMenu() {
+        // 1. Intentar cargar desde localStorage primero
+        const cachedMenu = localStorage.getItem('menu_doraditos');
+        
+        if (cachedMenu) {
+            menuCompleto = JSON.parse(cachedMenu);
+            renderizar(menuCompleto);
+            generarBotones(menuCompleto); // Función separada para los botones
+        }
+
+        // 2. Traer de Supabase siempre para mantener actualizado
+        const { data } = await supabase.from('menu_doraditos').select('*');
+        
+        if (data) {
+            menuCompleto = data;
+            // 3. Guardar en localStorage para la próxima vez
+            localStorage.setItem('menu_doraditos', JSON.stringify(data));
+            renderizar(menuCompleto);
+            generarBotones(menuCompleto);
+        }
+    }
+
+    // Nueva función auxiliar para no repetir código de los botones
+    function generarBotones(data) {
+        const cats = ['Todos', ...new Set(data.map(p => p.categoria).filter(c => c))];
+        document.getElementById('filters-container').innerHTML = cats.map(c => 
+            `<button class="btn btn-outline-light m-1" onclick="filtrarMenu('${c}')">${c}</button>`
+        ).join('');
+    }
+
+    cargarMenu();
+  </script>
+</body>
+</html>
