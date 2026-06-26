@@ -5,7 +5,7 @@ import './scss/style.scss'
 import './scss/examples.scss'
 
 import Login from './views/pages/login/Login'
-import Menu from './views/pages/menu/Menu' // <--- Importamos tu nuevo componente
+import Menu from './views/menu/Menu' // <--- Importamos tu nuevo componente
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
 const App = () => {
